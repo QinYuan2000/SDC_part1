@@ -84,7 +84,36 @@ class Scheduler:
 		#output to terminal that this is the next function to implement
 		self.log.error("The add_artificial_nodes member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
-
+		
+		for bb in self.cfg:
+			numericBBID = bb.attr["id"]
+			supersource_name = f"ssrc_{numericBBID}"
+			supersink_name = f"ssink_{numericBBID}"
+			bbLabel = bb.attr["label"]
+			self.cdfg.add_node(supersource_name, id=numericBBID, bbID=bbLabel, type="supersource", label=
+			supersource_name)
+			self.cdfg.add_node(supersink_name, id=numericBBID, bbID=bbLabel, type="supersink", label=
+			supersink_name)
+		
+		for node in self.cdfg:
+			if "ssrc_" in node or "ssink_" in node:
+				continue
+			nodebbID = node.attr["id"]
+			addsrc = 1
+			addsink = 1
+			for pred in self.cdfg.in_neighbors(node):
+				if pred.attr["id"] == nodebbID:
+					addsrc = 0
+					break
+			if addsrc:
+				self.cdfg.add_edge(f"ssrc_{nodebbID}", node)
+			for succ in self.cdfg.out_neighbors(node):
+				if succ.attr["id"] == nodebbID:
+					addsink = 0
+					break
+			if addsink:
+				self.cdfg.add_edge(node, f"ssink_{nodebbID}")
+		
 		#draw the cdfg for testing your code in task 1
 		self.cdfg.layout(prog='dot')
 		self.cdfg.draw('output.pdf')
@@ -99,13 +128,32 @@ class Scheduler:
 		#output to terminal that this is the next function to implement
 		self.log.error("The add_nodes_to_ilp member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
+		for node in self.cdfg:
+			if "ssrc_" in node:
+				self.ilp.add_variable(f"sv{node}", lower_bound=0, var_type="i")
+			else:
+				self.ilp.add_variable(f"sv{node}",var_type="i")
 		quit()
+
 
 	"""
 	Adds data dependency constraints to the scheduler object's constraint set based on the edges between CDFG nodes.
 	"""
 	def set_data_dependency_constraints(self):
 		#You must write both the implementation and the call of this function. 
+		inequality_sign = "geq"
+		#instantiate an empty dictionary
+		lhs_dictionary = {}
+		for node in self.cdfg:
+			nodebbID = node.attr["id"]
+			for succ in self.cdfg.out_neighbors(node):
+				if succ.attr["id"] == nodebbID:
+					#to add start time of A to inequality
+					lhs_dictionary[f"sv{succ}"] = 1
+					#or instead to add the negative start time of A to inequality
+					lhs_dictionary[f"sv{node}"] = -1
+					rhs = get_node_latency(node.attr)
+					self.constraints.add_constraint(lhs_dictionary, inequality_sign, rhs)
 
 		self.log.error("The set_data_dependency_constraints member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
@@ -115,6 +163,7 @@ class Scheduler:
 	Adds the constraints needed to allow minimizing the ASAP objective function to produce a valid result.
 	"""
 	def create_asap_scheduling_ilp(self):
+		self.set_data_dependency_constraints()
 		#output to terminal that this is the next function to implement
 		self.log.error("The create_asap_scheduling_ilp member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
