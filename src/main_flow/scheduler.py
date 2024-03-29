@@ -142,12 +142,12 @@ class Scheduler:
 	def set_data_dependency_constraints(self):
 		#You must write both the implementation and the call of this function. 
 		inequality_sign = "geq"
-		#instantiate an empty dictionary
-		lhs_dictionary = {}
 		for node in self.cdfg:
 			nodebbID = node.attr["id"]
 			for succ in self.cdfg.out_neighbors(node):
 				if succ.attr["id"] == nodebbID:
+					#instantiate an empty dictionary
+					lhs_dictionary = {}
 					#to add start time of A to inequality
 					lhs_dictionary[f"sv{succ}"] = 1
 					#or instead to add the negative start time of A to inequality
@@ -173,6 +173,8 @@ class Scheduler:
 	Adds terms to the objective function with coefficients that will ensure each node is scheduled ASAP.
 	"""
 	def set_asap_objective_function(self):
+		for node in self.cdfg:
+			self.obj_fun.add_variable(f"sv{node}", 1)
 		#output to terminal that this is the next function to implement
 		self.log.error("The set_asap_objective_function member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
@@ -182,6 +184,10 @@ class Scheduler:
 	Returns the sv of each BB's supersink in the form of a dictionary/list
 	"""
 	def get_sink_svs(self):
+		sink_svs = {}
+		for node in self.cdfg:
+			if "ssink_" in node:
+				sink_svs[node] = self.ilp.get_operation_timing_solution(node)
 		#output to terminal that this is the next function to implement
 		self.log.error("The get_sink_svs member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
@@ -193,6 +199,13 @@ class Scheduler:
 	@param sink_svs: a dictionary containing an identifier for a BB and a corresponding maximum sv
 	"""
 	def add_sink_sv_constraints(self, sink_svs):
+		for node in self.cdfg:
+			if "ssink_" in node:
+				inequality_sign = "leq"
+				lhs_dictionary = {}
+				lhs_dictionary[f"sv{node}"] = 1
+				rhs = sink_svs[node]
+				self.constraints.add_constraint(lhs_dictionary, inequality_sign, rhs)
 		#output to terminal that this is the next function to implement
 		self.log.error("The add_sink_sv_constraints member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
@@ -202,6 +215,8 @@ class Scheduler:
 	Adds the constraints needed to allow minimizing the ALAP objective function to produce a valid result.
 	"""
 	def create_alap_scheduling_ilp(self, sink_svs):
+		self.set_data_dependency_constraints()
+		self.add_sink_sv_constraints()
 		#output to terminal that this is the next function to implement
 		self.log.error("The create_alap_scheduling_ilp member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
@@ -211,6 +226,8 @@ class Scheduler:
 	Adds terms to the objective function with coefficients that will ensure each node is scheduled ALAP.
 	"""
 	def set_alap_objective_function(self):
+		for node in self.cdfg:
+			self.obj_fun.add_variable(f"sv{node}", -1)
 		#output to terminal that this is the next function to implement
 		self.log.error("The set_alap_objective_function member function in src/main_flow/scheduler.py has not yet been implemented")
 		self.log.info("Exiting early due to an unimplemented function")
