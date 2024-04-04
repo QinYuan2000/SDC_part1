@@ -12,3 +12,6 @@ a.out
 *.jpeg
 *.pdf
 __pycache__/
+sdc_proj_1
+tester.py
+examples
