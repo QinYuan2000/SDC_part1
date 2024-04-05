@@ -54,21 +54,39 @@ class Resource_Manager:
 	def add_resource_constraints(self, resource_dict):
 		self.check_resource_dict(resource_dict)
 		get_topological_order(self.cdfg)
-		
+		queue_dict = {key: [] for key in resource_dict.keys()}
+		for node in self.cdfg:
+			if node.attr["type"] in queue_dict:
+				queue_dict[node.attr["type"]].append(node)
+				if len(queue_dict[node.attr["type"]]) > resource_dict[node.attr["type"]]:
+					pred = queue_dict[node.attr["type"]].pop(0)
+					inequality_sign = "geq"
+					lhs_dictionary = {}
+					lhs_dictionary[f"sv{node}"] = 1
+					lhs_dictionary[f"sv{pred}"] = -1
+					rhs = 1
+					self.constraints.add_constraint(lhs_dictionary, inequality_sign, rhs)
 		#output to terminal that this is the next function to implement
-		self.log.error("The add_resource_constraints member function in src/main_flow/resources.py has not yet been implemented")
-		self.log.info("Exiting early due to an unimplemented function")
-
-		quit()
+		# self.log.error("The add_resource_constraints member function in src/main_flow/resources.py has not yet been implemented")
+		# self.log.info("Exiting early due to an unimplemented function")
+		# quit()
 
 	# function to add resources constraints for pipelined scheduling
 	def check_resource_constraints_pipelined(self, resource_dict, II):
 		self.check_resource_dict(resource_dict)
-
+		MRT = {key: [] for key in range(II)}
+		for node in self.cdfg:
+			if node.attr["type"] in resource_dict:
+				MRT[self.ilp.get_operation_timing_solution(node) % II].append(node.attr["type"])
+		for index in MRT:
+			for nodetype in resource_dict:
+				if MRT[index].count(nodetype) > resource_dict[nodetype]:
+					return False
+		return True
 		#output to terminal that this is the next function to implement
-		self.log.error("The check_resource_constraints_pipelined member function in src/main_flow/resources.py has not yet been implemented")
-		self.log.info("Exiting early due to an unimplemented function")
-		quit()
+		# self.log.error("The check_resource_constraints_pipelined member function in src/main_flow/resources.py has not yet been implemented")
+		# self.log.info("Exiting early due to an unimplemented function")
+		# quit()
 
 
 	"""
